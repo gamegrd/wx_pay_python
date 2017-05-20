@@ -3,7 +3,6 @@ import time
 import string
 import random
 import hashlib
-import urllib2
 import requests
 
 try:
@@ -24,7 +23,6 @@ class WxPayError(Exception):
 
 class WxPay(object):
     def __init__(self, wx_app_id, wx_mch_id, wx_mch_key, wx_notify_url):
-        self.opener = urllib2.build_opener(urllib2.HTTPSHandler())
         self.WX_APP_ID = wx_app_id
         self.WX_MCH_ID = wx_mch_id
         self.WX_MCH_KEY = wx_mch_key
@@ -68,7 +66,7 @@ class WxPay(object):
         """
         raw = [(k, str(raw[k]) if isinstance(raw[k], (int, float)) else raw[k]) for k in sorted(raw.keys())]
         for kv in raw:
-            print kv
+            print ( kv )
 
         s = "&".join("=".join(kv) for kv in raw if kv[1])
         s += "&key={0}".format(self.WX_MCH_KEY)
@@ -88,10 +86,9 @@ class WxPay(object):
         return "<xml>{0}</xml>".format(s)
 
     def fetch(self, url, data):
-        req = urllib2.Request(url, data=self.to_xml(data))
         try:
-            resp = self.opener.open(req, timeout=20)
-        except urllib2.HTTPError, e:
+            resp  = requests.post(url, data=self.to_xml(data))
+        except Exception as e:
             resp = e
         re_info = resp.read()
         try:
