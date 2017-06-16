@@ -176,6 +176,7 @@ class WxPay(object):
         if "out_trade_no" not in kwargs:
             kwargs.setdefault("out_trade_no", self.nonce_str())
         raw = self.unified_order(**kwargs)
+        print(raw)
         prepay_id = raw["prepay_id"]
         package = "prepay_id={0}".format(prepay_id)
         timestamp = int(time.time())
@@ -184,6 +185,22 @@ class WxPay(object):
                    nonceStr=nonce_str, package=package, signType="MD5")
         sign = self.sign(raw)
         return dict(package=package, appId=self.WX_APP_ID,
+                    timeStamp=timestamp, nonceStr=nonce_str, sign=sign) , prepay_id
+
+    def app_pay_api(self, **kwargs):
+        kwargs.setdefault("trade_type", "NATIVE")
+        if "out_trade_no" not in kwargs:
+            kwargs.setdefault("out_trade_no", self.nonce_str())
+        raw = self.unified_order(**kwargs)
+        print(raw)
+        prepay_id = raw["prepay_id"]
+        package = "Sign=WXPay"
+        timestamp = int(time.time())
+        nonce_str = self.nonce_str()
+        raw = dict(appId=self.WX_APP_ID,partenerid=self.WX_MCH_ID,prepayid=prepay_id, timeStamp=timestamp,
+                   nonceStr=nonce_str, package=package )
+        sign = self.sign(raw)
+        return dict(package=package, appId=self.WX_APP_ID,partenerid=self.WX_MCH_ID,prepayid=prepay_id,
                     timeStamp=timestamp, nonceStr=nonce_str, sign=sign) , prepay_id
 
     def order_query(self, **data):
