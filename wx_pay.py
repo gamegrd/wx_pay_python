@@ -4,6 +4,7 @@ import string
 import random
 import hashlib
 import requests
+import sys
 
 try:
     from flask import request
@@ -38,11 +39,15 @@ class WxPay(object):
     @staticmethod
     def nonce_str(length=32):
         char = string.ascii_letters + string.digits
-        return "".join(random.choice(char) for _ in range(length))
+        rt= "".join(random.choice(char) for _ in range(length))
+        return rt.upper()
 
     @staticmethod
     def to_utf8(raw):
-        return raw.encode("utf-8") if isinstance(raw, unicode) else raw
+        if sys.version_info.major == 3:
+            return raw.encode("utf-8") if isinstance(raw, str) else raw
+        else:
+            return raw.encode("utf-8") if isinstance(raw, unicode) else raw
 
     @staticmethod
     def to_dict(content):
@@ -81,16 +86,15 @@ class WxPay(object):
 
     def to_xml(self, raw):
         s = ""
-        for k, v in raw.iteritems():
-            s += "<{0}>{1}</{0}>".format(k, self.to_utf8(v), k)
-        return "<xml>{0}</xml>".format(s)
+        for k, v in raw.items():
+            s += "<{0}>{1}</{0}>".format(k, v, k)
+        return self.to_utf8("<xml>{0}</xml>".format(s))
 
     def fetch(self, url, data):
-        try:
-            resp  = requests.post(url, data=self.to_xml(data))
-        except Exception as e:
-            resp = e
-        re_info = resp.read()
+        data=self.to_xml(data)
+        print(data)
+        resp  = requests.post(url, data=data)
+        re_info = resp.content
         try:
             return self.to_dict(re_info)
         except ETree.ParseError:
@@ -424,4 +428,3 @@ class WxPay(object):
         self.WX_MCH_KEY = raw["sandbox_signkey"]
         self.sandboxed =True
         return
-
