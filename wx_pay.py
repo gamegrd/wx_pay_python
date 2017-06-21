@@ -6,6 +6,9 @@ import hashlib
 import requests
 import sys
 
+import logging
+log=logging.getLogger('main')
+
 try:
     from flask import request
 except ImportError:
@@ -70,12 +73,13 @@ class WxPay(object):
         https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=4_3
         """
         raw = [(k, str(raw[k]) if isinstance(raw[k], (int, float)) else raw[k]) for k in sorted(raw.keys())]
-        for kv in raw:
-            print ( kv )
 
         s = "&".join("=".join(kv) for kv in raw if kv[1])
         s += "&key={0}".format(self.WX_MCH_KEY)
-        return hashlib.md5(self.to_utf8(s)).hexdigest().upper()
+        log.debug(s)
+        ss = hashlib.md5(self.to_utf8(s)).hexdigest().upper()
+        log.debug(ss)
+        return ss
 
     def check(self, raw):
         """
@@ -92,7 +96,6 @@ class WxPay(object):
 
     def fetch(self, url, data):
         data=self.to_xml(data)
-        print(data)
         resp  = requests.post(url, data=data)
         re_info = resp.content
         try:
@@ -176,7 +179,6 @@ class WxPay(object):
         if "out_trade_no" not in kwargs:
             kwargs.setdefault("out_trade_no", self.nonce_str())
         raw = self.unified_order(**kwargs)
-        print(raw)
         prepay_id = raw["prepay_id"]
         package = "prepay_id={0}".format(prepay_id)
         timestamp = int(time.time())
@@ -188,20 +190,19 @@ class WxPay(object):
                     timeStamp=timestamp, nonceStr=nonce_str, sign=sign) , prepay_id
 
     def app_pay_api(self, **kwargs):
-        kwargs.setdefault("trade_type", "NATIVE")
+        kwargs.setdefault("trade_type", "APP")
         if "out_trade_no" not in kwargs:
             kwargs.setdefault("out_trade_no", self.nonce_str())
         raw = self.unified_order(**kwargs)
-        print(raw)
         prepay_id = raw["prepay_id"]
         package = "Sign=WXPay"
         timestamp = int(time.time())
         nonce_str = self.nonce_str()
-        raw = dict(appId=self.WX_APP_ID,partenerid=self.WX_MCH_ID,prepayid=prepay_id, timeStamp=timestamp,
-                   nonceStr=nonce_str, package=package )
+        raw = dict(appid=self.WX_APP_ID,partenerid=self.WX_MCH_ID,prepayid=prepay_id, timestamp=timestamp,
+                   noncestr=nonce_str, package=package )
         sign = self.sign(raw)
-        return dict(package=package, appId=self.WX_APP_ID,partenerid=self.WX_MCH_ID,prepayid=prepay_id,
-                    timeStamp=timestamp, nonceStr=nonce_str, sign=sign) , prepay_id
+        return dict(package=package, appid=self.WX_APP_ID,partenerid=self.WX_MCH_ID,prepayid=prepay_id,
+                    timeStamp=timestamp, noncestr=nonce_str, sign=sign) , prepay_id
 
     def order_query(self, **data):
         """
