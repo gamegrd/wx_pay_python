@@ -76,9 +76,9 @@ class WxPay(object):
 
         s = "&".join("=".join(kv) for kv in raw if kv[1])
         s += "&key={0}".format(self.WX_MCH_KEY)
-        log.debug(s)
+        #log.debug(s)
         ss = hashlib.md5(self.to_utf8(s)).hexdigest().upper()
-        log.debug(ss)
+        #log.debug(ss)
         return ss
 
     def check(self, raw):
