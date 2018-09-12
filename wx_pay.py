@@ -163,6 +163,34 @@ class WxPay(object):
             raise WxPayError(err_msg)
         return raw
 
+    def native_pay_api(self, **kwargs):
+        """
+        生成给JavaScript调用的数据
+        详细规则参考 https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=7_7&index=6
+
+        :param kwargs: openid, body, total_fee
+            openid: 用户openid
+            body: 商品名称
+            total_fee: 标价金额, 整数, 单位 分
+            out_trade_no: 商户订单号, 若未传入则自动生成
+        :return: 生成微信JS接口支付所需的信息
+        """
+        kwargs.setdefault("trade_type", "JSAPI")
+        if "out_trade_no" not in kwargs:
+            kwargs.setdefault("out_trade_no", self.nonce_str())
+        raw = self.unified_order(**kwargs)
+        log.debug(raw)
+        prepay_id = raw["prepay_id"]
+        code_url = raw["code_url"]
+        package = "prepay_id={0}".format(prepay_id)
+        timestamp = int(time.time())
+        nonce_str = self.nonce_str()
+        raw = dict(appId=self.WX_APP_ID, timeStamp=timestamp,
+                   nonceStr=nonce_str, package=package, signType="MD5")
+        sign = self.sign(raw)
+        return dict(package=package, appId=self.WX_APP_ID,
+                    timeStamp=timestamp, nonceStr=nonce_str, sign=sign,code_url=code_url) , prepay_id
+
     def js_pay_api(self, **kwargs):
         """
         生成给JavaScript调用的数据
@@ -179,6 +207,7 @@ class WxPay(object):
         if "out_trade_no" not in kwargs:
             kwargs.setdefault("out_trade_no", self.nonce_str())
         raw = self.unified_order(**kwargs)
+        log.debug(raw)
         prepay_id = raw["prepay_id"]
         package = "prepay_id={0}".format(prepay_id)
         timestamp = int(time.time())
@@ -446,3 +475,4 @@ class WxPay(object):
         self.WX_MCH_KEY = raw["sandbox_signkey"]
         self.sandboxed =True
         return
+
