@@ -179,7 +179,7 @@ class WxPay(object):
         if "out_trade_no" not in kwargs:
             kwargs.setdefault("out_trade_no", self.nonce_str())
         raw = self.unified_order(**kwargs)
-        log.debug(raw)
+        # log.debug(raw)
         prepay_id = raw["prepay_id"]
         code_url = raw["code_url"]
         package = "prepay_id={0}".format(prepay_id)
